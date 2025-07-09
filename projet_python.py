@@ -62,6 +62,37 @@ def tracer_meteo_irradiation(df: pd.DataFrame, title : str = "Evolution temporel
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
+    
+
+def a_des_valeur_manquante(df : pd.DataFrame) -> pd.DataFrame : 
+    nb_valeur_manquante_colonne = df.isnull().sum()
+    
+    total_valeur_manquante = nb_valeur_manquante_colonne.sum()
+    
+    if total_valeur_manquante == 0 : 
+        st.success("Aucunes valeurs manquantes !")
+    else : 
+        st.warning("Des valeurs manquantes ont été détectées !")
+        return nb_valeur_manquante_colonne
+    
+
+def fusionner_les_dataframe(df_plant_generation : pd.DataFrame, df_weather_data : pd.DataFrame) -> pd.DataFrame : 
+    
+    dataframe_fusionne = pd.merge(df_plant_generation,df_weather_data,on=["date_time", "plant_id"],how="inner")
+    st.success("Dataframes de production et météorologiques fusionnées avec succès")
+    return dataframe_fusionne
+
+
+def create_features(df : pd.DataFrame) -> pd.DataFrame : 
+    df["Jour de la semaine"] = df["date_time"].dt.day_of_week
+    df["Jour"] = df["date_time"].dt.day_name()
+    df["Heure"] = df["date_time"].dt.hour
+    df["is_day"] = df["Heure"].between(6, 17).astype(int)
+    return df
+    
+    
+    
+
 
 
 
@@ -122,15 +153,26 @@ with tab2:
     st.pyplot(plt)
     tracer_meteo_irradiation(df_weather_data)
     st.pyplot(plt)
-    
-    
-    
-    
-    
-
-    
+       
 with tab3:
     st.subheader("Préparation des données")
+    st.markdown("1. Y'a-t-il des valeurs manquantes ?")
+    st.markdown("Vérification pour les données de productions : ")
+    a_des_valeur_manquante(df_plant_generation)
+    st.markdown("Vérification pour les données météorologiques : ")
+    a_des_valeur_manquante(df_weather_data)
+    
+    st.markdown("2. Fusionner les jeux de données météo et production")
+    df_fusion = fusionner_les_dataframe(df_plant_generation,df_weather_data)
+    st.dataframe(df_fusion)
+    
+    st.markdown("3. Créer des variables calendaires à partir de la variable date_time :")
+    df_nouvelles_features = create_features(df_fusion)
+    st.dataframe(df_nouvelles_features)
+    
+    
+    
+    
 with tab4:
     st.subheader("Importance des features et étude de corrélations entre les variables")
 with tab5 : 

@@ -1,6 +1,10 @@
 import pandas as pd
 import streamlit as st 
 import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
 
 
 def lire_plant_generation_data_groupe_3(filename : str) -> pd.DataFrame | None :
@@ -85,11 +89,46 @@ def fusionner_les_dataframe(df_plant_generation : pd.DataFrame, df_weather_data 
 
 def create_features(df : pd.DataFrame) -> pd.DataFrame : 
     df["Jour de la semaine"] = df["date_time"].dt.day_of_week
-    df["Jour"] = df["date_time"].dt.day_name()
+    df["Jour"] = df["date_time"].dt.day
+    df["Mois"] = df["date_time"].dt.month
     df["Heure"] = df["date_time"].dt.hour
     df["is_day"] = df["Heure"].between(6, 17).astype(int)
     return df
+
+
+def separer_variables(df : pd.DataFrame) -> pd.DataFrame :
+     x = df.drop(["date_time", "plant_id", "dc_power", "ac_power"],axis=1)
+     y = df["dc_power"]
+     st.success("Les données ont bien été séparées. D'un côté x les variables explicatives et y la variable cible ici dc_power ")
+     return x,y
+ 
+ 
+def tracer_feature_importance(x, indices, importances, feature_names, title : str = "Importances des caractéristiques") -> None :
+    plt.figure(figsize=(10, 6))
+    plt.title(title)
+    plt.bar(range(x.shape[1]), importances[indices], align="center")
+    plt.xticks(range(x.shape[1]), feature_names[indices], rotation=90)
+    plt.xlim([-1, x.shape[1]])
+    plt.show()
+
+
+def afficher_le_top5(): 
+    top_features = feature_names[indices][:5] 
+    return top_features
+
+def determiner_correlation(df : pd.DataFrame, top5): 
+     df_correlation = df[top5].corr()
+     return df_correlation
+ 
+def tracer_heatmap_correlation(corr_variable, title="Matrice de corrélation")-> None :
+    plt.figure(figsize=(12, 10))
+    sns.heatmap(corr_variable, annot=True, fmt=".2f", cmap="coolwarm", square=True)
     
+
+def supprimer_module_temp(df : pd.DataFrame) -> pd.DataFrame :
+     st.info("Colonne module_temperature supprimée car corrélée à irradiation")
+     return df.drop("module_temperature", axis=1)
+
     
     
 
@@ -171,10 +210,51 @@ with tab3:
     st.dataframe(df_nouvelles_features)
     
     
-    
-    
 with tab4:
     st.subheader("Importance des features et étude de corrélations entre les variables")
+    st.markdown("1. Utiliser un modèle RandomForestRegressor pour évaluer l'importance des variables :")
+    st.markdown("1. Séparer les données en X (variables explicatives) et y (variable cible)")
+    x,y = separer_variables(df_nouvelles_features)
+    st.markdown("2. Entraîner le modèle sur les données")
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    st.spinner("Entraînement du modèle sur les données...")
+    model.fit(x,y)
+    st.success("Données entrainées avec succès !")
+    st.markdown("3. Évaluer l'importance des variables avec model.feature_importances_")
+    importances = model.feature_importances_
+    feature_names = x.columns
+    indices = np.argsort(importances)[::-1]
+    tracer_feature_importance(x = x, indices = indices, importances = importances, feature_names = feature_names,title = "Importance des caractéristiques")
+    st.pyplot(plt)
+    st.markdown("2. Conserver uniquement les 5 variables les plus importantes pour l'entraînement dumodèle (celles avec la plus grande importance). Quelle est la variable la plus importante ?")
+    top5 = afficher_le_top5()
+    st.markdown(top5)
+    st.markdown("La variable la plus importante est la variable irradiation")
+    st.markdown("3. Y'a-t-il des variables corrélées entre elles dans les données sélectionnées ?")
+    st.markdown("1. Visualiser la matrice de corrélation entre les variables (on utilisera df.corr() et une heatmap)")
+    df_correlation = determiner_correlation(df_nouvelles_features, top5)
+    st.dataframe(df_correlation)
+    st.markdown("Visualisation des corrélations à travers une heatmap :")
+    tracer_heatmap_correlation(df_correlation,title="Corrélations – Top-5 variables")
+    st.pyplot(plt)
+    st.markdown("2. Identifier les variables corrélées entre elles (corrélation > 0.9)")
+    mask = (df_correlation > 0.9) & (df_correlation < 1)
+    variable_correlee = df_correlation.where(mask)
+    st.dataframe(variable_correlee)
+    st.markdown("Les deux variables corrélées entre elles sont donc irradiation et module temperature")
+    st.markdown("3. Supprimer une des deux variables corrélées (la moins importante) de l'analyse")
+    df_final = supprimer_module_temp(df_correlation)
+    st.dataframe(df_final)
+    st.markdown("4. Créer une fonction create_final_dataset(df) qui prend en entrée un DataFrame et renvoie un DataFrame avec les variables sélectionnées pour l'entraînement du modèle.")
+    
+    
+    
+    
+    
+    
+    
+    
+    
 with tab5 : 
     st.subheader("Modélisation")
 with tab6 : 

@@ -189,6 +189,36 @@ def tracer_graphique_prediction(y_test, y_pred_prev, title : str = "Production r
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
+
+
+def separer_X_ac_y_ac(df : pd.DataFrame) -> pd.DataFrame | pd.Series : 
+    features_ac = ["irradiation","ambient_temperature","Heure","Jour","dc_power_pred"] 
+    X_ac = df_nettoyage[features_ac].copy()
+    y_ac = df_nettoyage["ac_power"].copy()
+    st.info("Les données ont été séparées entre variables explicatives (X) et variable cible (y)")
+    return X_ac, y_ac
+
+
+def tracer_graphique_prediction_ac(y_test, y_pred_ac, title : str = "Production alternatif réelle VS production alternative prédite", xlabel : str = "Puissance AC réelle", ylabel : str = "Puissance AC prédite") -> None : 
+    plt.figure(figsize=(8,5))
+    plt.scatter(y_test, y_pred_ac)
+    # bissectrice
+    min_val, max_val = y_test.min(), y_test.max()
+    plt.plot([min_val, max_val], [min_val, max_val], "--", color="red")
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+
+def tracer_evolution_prod_ac(df : pd.DataFrame, title : str = "Évolution temporelle de la puissance AC (prédite)", xlabel : str = "Date", ylabel : str = "Puissance AC prédite") -> None : 
+    plt.figure(figsize=(12, 6))
+    plt.plot(df["date_time"], df["ac_power_pred"], label="AC prédite")
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+
+
+    
     
 
 
@@ -210,7 +240,7 @@ initial_sidebar_state="expanded",
 )
 
 st.header("Projet Python - Prédiction de la production solaire")
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Présentation du projet","Exploration des données", "Préparation des données", "Importance des features et étude de corrélations entre les variables", "Modélisation", "Visualisation des résultats"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["Présentation du projet","Exploration des données", "Préparation des données", "Importance des features et étude de corrélations entre les variables", "Modélisation", "Visualisation des résultats", "Bonus"])
 with tab1:
     st.subheader("Présentation du projet")
     st.write("hello, coucoucdjfjdopjvopjfovfdvf")
@@ -363,6 +393,63 @@ with tab6 :
      st.dataframe(results.head())
      tracer_graphique_prediction(y_test, y_pred_prev)
      st.pyplot(plt)
+
+with tab7 : 
+    st.subheader("Bonus")
+    st.markdown("6. Prédire la valeur de ac_power (la puissance en courant alternatif) à partir des prédictions dedc_power (la puissance en courant continu) et des autres variables.")
+    st.markdown("1. Créer un modèle de machine learning pour prédire ac_power à partir des autres variables et des prédictions de dc_power.")
+    df_nettoyage = df_nettoyage.copy()
+    toutes_features = create_final_dataset(df_nettoyage)
+    df_nettoyage["dc_power_pred"] = model_forest.predict(toutes_features)
+    X_ac, y_ac = separer_X_ac_y_ac(df_nettoyage)
+    X_train_ac, X_test_ac, y_train_ac, y_test_ac = split_train_test(X_ac, y_ac)
+    model_ac = RandomForestRegressor(random_state=42)
+    model_ac.fit(X_train_ac, y_train_ac)
+    y_pred_ac = model_ac.predict(X_test_ac)
+    st.markdown("2. Évaluer le modèle sur les données de test")
+    df_score_ac = evaluer_modele_lineaire(y_test_ac, y_pred_ac)
+    st.markdown("3. Afficher les métriques de performance (ex: RMSE, MAE, R2)")
+    st.dataframe(df_score_ac)
+    st.markdown("4. Visualiser les prévisions du modèle sur les données de test")
+    tracer_graphique_prediction_ac(y_test_ac, y_pred_ac)
+    st.pyplot(plt)
+    st.markdown("5. Comparer les prévisions avec les valeurs réelles")
+    comparaison_ac = pd.DataFrame({"ac_power_reel": y_test_ac.values,"ac_power_pred": y_pred_ac})
+    st.dataframe(comparaison_ac)
+    st.markdown("Au regard des résultats obtenus, la production alternative prédite reste très proche de la production alternative réelle")
+    st.markdown("7. Ajouter la prévision de ac_power dans le DataFrame df_to_pred_selected et visualisez l'évolution de la puissance en courant alternatif dans le temps.")
+    df_to_pred_selected = df_to_pred_selected.copy()
+    df_to_pred_selected["dc_power_pred"] = model_forest.predict(df_to_pred_selected)
+    df_to_pred_selected_ac = df_to_pred_selected[["irradiation", "ambient_temperature", "Heure", "Jour", "dc_power_pred"]]
+    df_to_pred_selected["ac_power_pred"] = model_ac.predict(df_to_pred_selected_ac)
+    df_to_pred_selected["date_time"] = df_to_pred_features["date_time"].values
+    st.dataframe(df_to_pred_selected.head())
+    st.markdown("Visualisation de l'évolution de la puissance en courant alternatif dans le temps : ")
+    tracer_evolution_prod_ac(df_to_pred_selected)
+    st.pyplot(plt)
+    st.markdown("8. En déduire et visualiser l'efficacité de l'onduleur sur les données prédites (ratio entre la puissance en courant alternatif et la puissance en courant continu)")
+    st.markdown("1. Créer une nouvelle variable efficacite_onduleur : ac_power / dc_power")
+    df_to_pred_selected["efficacite_onduleur"] = (df_to_pred_selected["ac_power_pred"] / df_to_pred_selected["dc_power_pred"])
+    st.dataframe(df_to_pred_selected.head())
+    st.markdown("2. Visualiser l'évolution de cette variable dans le temps ainsi que celles de dc_power et ac_power")
+    
+    df_to_pred_selected["efficacité_pourcentage"] = df_to_pred_selected["efficacite_onduleur"] * 100
+
+    plt.figure(figsize=(14, 6))
+    plt.plot(df_to_pred_selected["date_time"],
+         df_to_pred_selected["dc_power_pred"], label="🔋 DC Power")
+    plt.plot(df_to_pred_selected["date_time"],
+         df_to_pred_selected["ac_power_pred"], label="⚡ AC Power")
+    plt.plot(df_to_pred_selected["date_time"],
+         df_to_pred_selected["efficacité_pourcentage"] * 100, "--", label="⚙️ Efficacité [%]")
+    plt.xlabel("Date-heure"); plt.ylabel("Valeur (W ou %)")
+    plt.legend(); plt.grid(True); plt.tight_layout()
+    st.pyplot(plt)
+        
+        
+    
+    
+    
      
      
 

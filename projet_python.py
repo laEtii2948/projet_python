@@ -216,6 +216,17 @@ def tracer_evolution_prod_ac(df : pd.DataFrame, title : str = "Évolution tempor
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
+    
+
+def tracer_evolution_efficacite_ondulateur(df : pd.DataFrame, title : str ="Evolution de l'efficacité ondulateur", xlabel : str= "Date", ylabel : str = "Valeur (W ou %)") -> None : 
+    plt.figure(figsize=(14, 6))
+    plt.plot(df["date_time"], df["dc_power_pred"], label="🔋 DC Power")
+    plt.plot(df["date_time"], df["ac_power_pred"], label="⚡ AC Power")
+    plt.plot(df["date_time"], df["efficacité_pourcentage"] * 100, "--", label="⚙️ Efficacité [%]")
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.show()
+    
 
 
     
@@ -240,7 +251,7 @@ initial_sidebar_state="expanded",
 )
 
 st.header("Projet Python - Prédiction de la production solaire")
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["Présentation du projet","Exploration des données", "Préparation des données", "Importance des features et étude de corrélations entre les variables", "Modélisation", "Visualisation des résultats", "Bonus"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(["Présentation du projet","Exploration des données", "Préparation des données", "Importance des features et étude de corrélations entre les variables", "Modélisation", "Visualisation des résultats", "Bonus", "Résidus"])
 with tab1:
     st.subheader("Présentation du projet")
     st.write("hello, coucoucdjfjdopjvopjfovfdvf")
@@ -432,19 +443,29 @@ with tab7 :
     df_to_pred_selected["efficacite_onduleur"] = (df_to_pred_selected["ac_power_pred"] / df_to_pred_selected["dc_power_pred"])
     st.dataframe(df_to_pred_selected.head())
     st.markdown("2. Visualiser l'évolution de cette variable dans le temps ainsi que celles de dc_power et ac_power")
-    
     df_to_pred_selected["efficacité_pourcentage"] = df_to_pred_selected["efficacite_onduleur"] * 100
-
-    plt.figure(figsize=(14, 6))
-    plt.plot(df_to_pred_selected["date_time"],
-         df_to_pred_selected["dc_power_pred"], label="🔋 DC Power")
-    plt.plot(df_to_pred_selected["date_time"],
-         df_to_pred_selected["ac_power_pred"], label="⚡ AC Power")
-    plt.plot(df_to_pred_selected["date_time"],
-         df_to_pred_selected["efficacité_pourcentage"] * 100, "--", label="⚙️ Efficacité [%]")
-    plt.xlabel("Date-heure"); plt.ylabel("Valeur (W ou %)")
-    plt.legend(); plt.grid(True); plt.tight_layout()
+    tracer_evolution_efficacite_ondulateur(df_to_pred_selected)
     st.pyplot(plt)
+    st.markdown("3. Analyser les variations de cette variable en fonction des conditions météorologiques")
+    corr_eff = df_to_pred_selected[['efficacite_onduleur', 'ambient_temperature', 'irradiation']].corr()
+    st.dataframe(corr_eff)
+    plt.figure(figsize=(12, 10))
+    sns.heatmap(corr_eff, annot=True, fmt=".2f", cmap="coolwarm", square=True)
+    st.pyplot(plt)
+    
+with tab8 : 
+    st.subheader("Les résidus")
+    st.markdown("1. Reprenez le modèle de régression linéaire de la question 4.2 et calculez les résidus (erreurs de prédiction) sur les données de test")
+    y_test_arr = y_test.to_numpy()          # même ordre que X_test
+    y_pred_arr = y_pred                     # déjà ndarray
+
+    residus_arr = y_test_arr - y_pred_arr   # position par position
+
+    df_residus = pd.DataFrame(
+    np.column_stack([y_test_arr, y_pred_arr, residus_arr]),
+    columns=["y_test", "y_pred", "residu"])
+
+    st.dataframe(df_residus.head())
         
         
     

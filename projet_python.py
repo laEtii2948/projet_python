@@ -98,7 +98,7 @@ def conversion_en_date_time(df : pd.DataFrame) -> pd.DataFrame :
 
 
 # --------------------------------FONCTION TRACER LA COURBE TEMPORELLE DE PRODUCTION----------------------------------
-def tracer_production(df : pd.DataFrame, title : str = "Evolution temporelle de la production", xlabel : str ="Date", ylabel : str = "Puissance en courant continu (DC)") -> None :
+def tracer_production(df : pd.DataFrame, title : str = "Evolution temporelle de la production", xlabel : str ="Date au format Mois-Jour-Heure", ylabel : str = "Puissance en courant continu (DC)") -> None :
     """Fonction qui trace l'évolution temporelle de la puissance en courant continu (DC) à partir des données de 
     production solaire. La fonction créée le graphique matplotlib puis affiche la courbe temporelle. 
     :param df: dataframe contenant obligatoirement les colonnes date_time et dc_power pour les besoins de la visualisation
@@ -115,7 +115,7 @@ def tracer_production(df : pd.DataFrame, title : str = "Evolution temporelle de 
 
 
 # -----------------------------FONCTION TRACER LA COURBE TEMPORELLE DES DONNEES METEOROLOGIQUES---------------------------- 
-def tracer_meteo_temp_ambiante(df: pd.DataFrame, title : str = "Evolution temporelle des données de températures ambiantes", xlabel : str = "Date", ylabel : str = "Température ambiante en °C") -> None :
+def tracer_meteo_temp_ambiante(df: pd.DataFrame, title : str = "Evolution temporelle des données de températures ambiantes", xlabel : str = "Date au format Mois-Jour-Heure", ylabel : str = "Température ambiante en °C") -> None :
     """Cette fonction trace la courbe temporelle des données météorologiques. Ici on commence par les données de températures
     ambiantes. 
     :param df: dataframe avec les données météorologiques. Le dataframe doit au moins contenir date_time et ambient_temperature
@@ -131,7 +131,7 @@ def tracer_meteo_temp_ambiante(df: pd.DataFrame, title : str = "Evolution tempor
 
 
 # -----------------------------FONCTION TRACER LA COURBE TEMPORELLE DES DONNEES METEOROLOGIQUES----------------------------   
-def tracer_meteo_module_temp(df: pd.DataFrame, title : str = "Evolution temporelle des données de températures des panneaux photovoltaïques", xlabel : str = "Date", ylabel : str = "Température des panneaux en °C") -> None :
+def tracer_meteo_module_temp(df: pd.DataFrame, title : str = "Evolution temporelle des données de températures des panneaux photovoltaïques", xlabel : str = "Date au format Mois-Jour-Heure", ylabel : str = "Température des panneaux en °C") -> None :
     """Cette fonction trace la courbe temporelle des données météorologiques. Ici, les données des températures des panneaux photovoltaïques
     :param df: dataframe avec les données météorologiques. Le dataframe doit au moins contenir date_time et module_temperature
     :param title: Titre du graphique. Par défaut, c'est celui indiqué en paramètre 
@@ -146,7 +146,7 @@ def tracer_meteo_module_temp(df: pd.DataFrame, title : str = "Evolution temporel
 
 
 # -----------------------------FONCTION TRACER LA COURBE TEMPORELLE DES DONNEES METEOROLOGIQUES---------------------------- 
-def tracer_meteo_irradiation(df: pd.DataFrame, title : str = "Evolution temporelle des données de températures des irradiations", xlabel : str = "Date", ylabel : str = "Irradiation solaire (en W/m²)") -> None :
+def tracer_meteo_irradiation(df: pd.DataFrame, title : str = "Evolution temporelle des données de températures des irradiations", xlabel : str = "Date au format Mois-Jour-Heure", ylabel : str = "Irradiation solaire (en W/m²)") -> None :
     """Cette fonction trace la courbe temporelle des données météorologiques. Ici les données des températures des irradiations solaires.
     :param df: dataframe avec les données météorologiques. Le dataframe doit au moins contenir date_time et irradiation 
     :param title: Titre du graphique. Par défaut, c'est celui indiqué en paramètre 
@@ -359,14 +359,15 @@ def tracer_graphique_prediction(y_test, y_pred_prev, title : str = "Production r
     :return None: La fonction ne retourne rien. Elle trace simplement le graphique. """
     
     plt.figure(figsize=(8,5))
-    plt.scatter(y_test, y_pred_prev)
-    # bissectrice
+    plt.scatter(y_test, y_pred_prev, color="tab:blue", s=60, label = "prédictions")
+    plt.scatter(y_test,y_test,facecolors="none", edgecolors="tab:orange", marker="o", s=70, label="réel (référence)")
     min_val, max_val = y_test.min(), y_test.max()
     plt.plot([min_val, max_val], [min_val, max_val], "--", color="red")
-
+    
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
+    plt.legend()
 
 
 #-----------------------------FONCTION SEPARER LES DONNEES EXPLICATIVES ET CIBLE ----------------------------------------------------
@@ -383,7 +384,7 @@ def separer_X_ac_y_ac(df : pd.DataFrame) -> pd.DataFrame | pd.Series :
 
 
 #-----------------------------FONCTION TRACER GRAPHIQUE PREDICTION------------------------------------------------------------------
-def tracer_graphique_prediction_ac(y_test, y_pred_ac, title : str = "Production alternatif réelle VS production alternative prédite", xlabel : str = "Puissance AC réelle", ylabel : str = "Puissance AC prédite") -> None : 
+def tracer_graphique_prediction_ac(y_test, y_pred_ac, title : str = "Production alternative réelle VS production alternative prédite", xlabel : str = "Puissance AC réelle", ylabel : str = "Puissance AC prédite") -> None : 
     """Fonction qui trace un graphique en nuage de point de la puissance en courant alternatif réelle et la puissance en courant alternative prédite. 
     La fonction affiche une droite de référence rouge et évalue visuellement la précision du modèle. 
     :param y_test: variable de test réelle 
@@ -394,17 +395,20 @@ def tracer_graphique_prediction_ac(y_test, y_pred_ac, title : str = "Production 
     :return None: La fonction ne retourne rien. Elle affiche simplment le graphique. """
     
     plt.figure(figsize=(8,5))
-    plt.scatter(y_test, y_pred_ac)
+    plt.scatter(y_test, y_pred_ac, color="tab:blue", s=60,label="predictions")
+    plt.scatter(y_test, y_test, facecolors="none", edgecolors="tab:orange", marker="o", s=70, label="réel (référence)")
     min_val, max_val = y_test.min(), y_test.max()
     plt.plot([min_val, max_val], [min_val, max_val], "--", color="red")
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
+    plt.legend()
+    
 
 
 #-----------------------------FONCTION TRACER EVOLUTION PRODUCTION COURANT ALTERNATIF-----------------------------------------------------
-def tracer_evolution_prod_ac(df : pd.DataFrame, title : str = "Évolution temporelle de la puissance AC (prédite)", xlabel : str = "Date", ylabel : str = "Puissance AC prédite") -> None : 
+def tracer_evolution_prod_ac(df : pd.DataFrame, title : str = "Évolution temporelle de la puissance AC (prédite)", xlabel : str = "Date au format Mois-Jour-Heure", ylabel : str = "Puissance AC prédite") -> None : 
     """Fonction qui trace la courbe temporelle de la puissance en courant alternatif prédite afin de visualiser son évolution au fil du temps. 
     :param df: Le dataframe utilisé pour les besoins de la fonction 
     :param title: Titre du graphique. Par défaut c'est celle qui est indiqué en paramètre. 
@@ -420,7 +424,7 @@ def tracer_evolution_prod_ac(df : pd.DataFrame, title : str = "Évolution tempor
     
 
 #-----------------------------FONCTION TRACER EVOLUTION EFFICACITE ONDULATEUR----------------------------------------------------------
-def tracer_evolution_efficacite_ondulateur(df : pd.DataFrame, title : str ="Evolution de l'efficacité ondulateur", xlabel : str= "Date", ylabel : str = "Valeur (W ou %)") -> None : 
+def tracer_evolution_efficacite_ondulateur(df : pd.DataFrame, title : str ="Evolution de l'efficacité ondulateur", xlabel : str= "Date au format Mois-Jour", ylabel : str = "Valeur (W ou %)") -> None : 
     """Fonction qui affiche sur ce même graphique l'évolution temporelle de la puissance en courant continu, puissance en courant alternatif et 
     de l'efficacité ondulateur. 
     :param df: le dataframe utilisé dans le cadre de ce graphique. 
@@ -508,12 +512,16 @@ with tab1:
     st.markdown("3. Visualiser l'évolution temporelle de la production d'énergie solaire et des données météorologiques")
     tracer_production(df_plant_generation)
     st.pyplot(plt)
+    st.markdown("Ce graphique montre la puissance continue (en courant continu) délivrée par une installation, très probablement photovoltaïque, du 7 au 16 juin 2020. Chaque journée forme une arche : la production démarre brusquement au lever du soleil, atteint rapidement un plateau oscillant entre 15 000 et 20 000 W, puis retombe à zéro au coucher, traduisant le cycle jour‑nuit typique du solaire. ")
     tracer_meteo_temp_ambiante(df_weather_data)
     st.pyplot(plt)
+    st.markdown("Le tracé représente la température ambiante, mesurée heure par heure du 7 au 16 juin 2020. On y voit la courbe du cycle jour‑nuit : chaque journée débute par une valeur minimale au petit matin (environ 23–24 °C), la température grimpe rapidement en matinée, atteint un maximum vers le milieu de l’après‑midi (jusqu’à 34–35 °C les 8, 9 et 10 juin) puis redescend progressivement après le coucher du soleil. À partir du 12 juin, les sommets quotidiens s’abaissent autour de 30–32 °C et les creux deviennent un peu plus frais (~22 °C). Globalement, le graphique illustre une alternance thermique journalière stable, avec une première moitié de période très chaude puis un léger rafraîchissement en seconde moitié.")
     tracer_meteo_module_temp(df_weather_data)
     st.pyplot(plt)
+    st.markdown("Le graphique retrace la température de surface des panneaux photovoltaïques du 7 au 16 juin 2020 : chaque journée s’ouvre à une vingtaine de degrés juste après l’aube, la température grimpe rapidement sous l’effet du rayonnement solaire, culmine entre 50 °C et plus de 60 °C lors des journées très ensoleillées (8–10 juin), puis redescend brutalement dès que l’irradiance baisse, avant de revenir autour de 22–25 °C pendant la nuit. Les bosses et creux intrajournaliers reflètent donc à la fois l’alternance jour‑nuit et les fluctuations météorologiques.")
     tracer_meteo_irradiation(df_weather_data)
     st.pyplot(plt)
+    st.markdown("Ce tracé représente l’irradiation solaire reçue au sol entre le 7 et le 16 juin 2020. Comme prévu, le signal est nul la nuit, puis grimpe brutalement après le lever du soleil, forme un plateau plus ou moins élevé en milieu de journée et retombe à zéro au coucher : c’est donc le cycle journalier de l’ensoleillement.")
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -559,6 +567,7 @@ with tab3:
     indices = np.argsort(importances)[::-1]
     tracer_feature_importance(x = x, indices = indices, importances = importances, feature_names = feature_names,title = "Importance des caractéristiques")
     st.pyplot(plt)
+    st.markdown("Ce diagramme de l’importance des caractéristiques montre qu’une variable domine très nettement toutes les autres : l’irradiation solaire (la première barre, environ  90 % de l’importance totale) influence presque à elle seule le modèle de prédiction. Les facteurs secondaires comme les température ambiante et température des panneaux ne pèsent que quelques % chacun, tandis que les indicateurs calendaires (jour, semaine, mois, day of week) sont quasi négligeables. Autrement dit, pour estimer la production photovoltaïque, le modèle s’appuiera avant tout sur la quantité de rayonnement reçu, les conditions thermiques n’apportent qu’un ajustement mineur, et le calendrier n’a qu’un effet marginal.")
     
     st.markdown("2. Conserver uniquement les 5 variables les plus importantes pour l'entraînement dumodèle (celles avec la plus grande importance). Quelle est la variable la plus importante ?")
     top5 = afficher_le_top5()
@@ -573,6 +582,7 @@ with tab3:
     st.markdown("Visualisation des corrélations à travers une heatmap :")
     tracer_heatmap_correlation(df_correlation,title="Corrélations – Top-5 variables")
     st.pyplot(plt)
+    st.markdown("La matrice de corrélation montre que l’irradiation solaire est très fortement corrélée à la température des modules (0,96) et, dans une moindre mesure, à la température ambiante (0,75). Plus le rayonnement est élevé, plus les panneaux montent en température.")
     
     st.markdown("2. Identifier les variables corrélées entre elles (corrélation > 0.9)")
     mask = (df_correlation > 0.9) & (df_correlation < 1)
@@ -660,6 +670,7 @@ with tab5 :
      st.dataframe(results.head())
      tracer_graphique_prediction(y_test, y_pred_prev)
      st.pyplot(plt)
+     st.markdown("Le nuage de points compare pour un ensemble d’observations la puissance DC réellement mesurée à celle estimée par le modèle. La diagonale rouge représente l’accord parfait (y = x). La majorité des points s’alignent assez près de cette diagonale, signe que le modèle reproduit globalement la production. ")
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -689,6 +700,7 @@ with tab6 :
     st.markdown("4. Visualiser les prévisions du modèle sur les données de test")
     tracer_graphique_prediction_ac(y_test_ac, y_pred_ac)
     st.pyplot(plt)
+    st.markdown("Le nuage de points confronte la puissance AC réellement mesurée à celle estimée par le modèle. la diagonale rouge représente l’accord parfait (x = y). La majorité des observations s’aligne près de cette diagonale, ce qui traduit une bonne corrélation générale entre prédiction et réalité")
     
     st.markdown("5. Comparer les prévisions avec les valeurs réelles")
     comparaison_ac = pd.DataFrame({"ac_power_reel": y_test_ac.values,"ac_power_pred": y_pred_ac})
@@ -705,6 +717,7 @@ with tab6 :
     st.markdown("Visualisation de l'évolution de la puissance en courant alternatif dans le temps : ")
     tracer_evolution_prod_ac(df_to_pred_selected)
     st.pyplot(plt)
+    st.markdown("Le tracé illustre la puissance AC que le modèle prévoit au fil du temps, sur la fin de journée la courbe reste nulle la nuit, puis s’élève dès l’aube, atteint un plateau vers midi avant de décliner en fin d’après‑midi, reproduisant le cycle solaire typique d’une centrale photovoltaïque. ")
     
     st.markdown("8. En déduire et visualiser l'efficacité de l'onduleur sur les données prédites (ratio entre la puissance en courant alternatif et la puissance en courant continu)")
     
@@ -717,6 +730,7 @@ with tab6 :
     df_to_pred_selected["efficacité_pourcentage"] = df_to_pred_selected["efficacite_onduleur"] * 100
     tracer_evolution_efficacite_ondulateur(df_to_pred_selected)
     st.pyplot(plt)
+    st.markdown("Le graphique superpose la puissance côté DC (bleu) issue des panneaux, la puissance côté AC (orange) délivrée par l’onduleur et, en pointillé vert, l’efficacité ondulateur. Nous avons volontairement exprimé l’efficacité de l’onduleur en pourcentage plutôt qu’en valeur décimale : tracée à côté des courbes de puissance, l’efficacité sous forme décimale paraissait visuellement nulle. La convertir en pourcentage ramène son amplitude dans une plage comparable à celle des puissances. On peut voir que l'efficacité ondulateur performe bien au moment de plein jour. En revanche, l'efficacité ondulatoire est nulle durant la nuit, c'est pourquoi il n'y a aucune courbe verte durant la nuit.")
     
     st.markdown("3. Analyser les variations de cette variable en fonction des conditions météorologiques")
     corr_eff = df_to_pred_selected[['efficacite_onduleur', 'ambient_temperature', 'irradiation']].corr()
@@ -724,6 +738,7 @@ with tab6 :
     plt.figure(figsize=(12, 10))
     sns.heatmap(corr_eff, annot=True, fmt=".2f", cmap="coolwarm", square=True)
     st.pyplot(plt)
+    st.markdown("D’après la matrice de corrélation, l’efficacité de l’onduleur ne dépend pratiquement pas des conditions météorologiques représentées ici : son coefficient de corrélation vaut seulement 0,03 avec la température ambiante et 0,10 avec la température des panneaux photovoltaïques, des valeurs proches de zéro qui indiquent une variation négligeable. ")
     
     
 # --------------------------------------------------------------------------------------------------------------------
@@ -740,6 +755,7 @@ with tab7 :
     st.markdown("2. Visualiser les résidus en fonction des valeurs prédites")
     tracer_visualisation_residus(y_pred,residus)
     st.pyplot(plt)
+    st.markdown("Ce graphique montre les résidus entre la production réelle et la production que le modèle prédit. Idéalement, tous les points devraient se regrouper autour de la ligne rouge, résidu = 0, or on voit un schéma clair : pour les très faibles puissances prédites, l’erreur est plutôt négatif, pour les puissances moyennes à fortes, l’erreur devient positive. ")
         
         
     
